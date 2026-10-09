@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Earn Money Mini App</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Monetag Ad SDK -->
+  <script src="//libtl.com/sdk.js" data-zone="11990145" data-sdk="show_11990145"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: var(--tg-theme-bg-color, #f4f7f6); color: var(--tg-theme-text-color, #333); padding: 15px; }
@@ -51,7 +53,7 @@
         <div class="task-title">টেলিগ্রাম চ্যানেলে জয়েন করুন</div>
         <div class="task-reward">+ ৳১.০০</div>
       </div>
-      <button class="task-btn" id="task1-btn" onclick="completeTask('task1', 1.0)">পুররণ করুন</button>
+      <button class="task-btn" id="task1-btn" onclick="completeTask('task1', 1.0)">পূরণ করুন</button>
     </div>
 
     <div class="task-item">
@@ -114,31 +116,37 @@
       });
     }
 
-    // ১. অ্যাড দেখার ফাংশন (৳০.৫০)
+    // ১. Monetag Rewarded Ad দেখার ফাংশন (৳০.৫০)
     function watchAd() {
       const btn = document.getElementById('watch-ad-btn');
       btn.disabled = true;
-      let count = 5;
-      
-      const timer = setInterval(() => {
-        btn.innerText = `অ্যাড চলছে... (${count}s)`;
-        count--;
-        if (count < 0) {
-          clearInterval(timer);
+      btn.innerText = "অ্যাড লোড হচ্ছে...";
+
+      if (typeof show_11990145 === 'function') {
+        show_11990145('pop').then(() => {
+          // ইউজার অ্যাড সম্পূর্ণ দেখেছে
           balance += 0.50;
           updateUI();
           alert("অভিনন্দন! আপনি ৳০.৫০ রিওয়ার্ড পেয়েছেন।");
           btn.innerText = "অ্যাড দেখুন (৳০.৫০)";
           btn.disabled = false;
-        }
-      }, 1000);
+        }).catch(e => {
+          // অ্যাড লোড হতে সমস্যা হলে বা কোনো এরর দেখা দিলে
+          alert("অ্যাড প্লে হতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+          btn.innerText = "অ্যাড দেখুন (৳০.৫০)";
+          btn.disabled = false;
+        });
+      } else {
+        alert("অ্যাড নেটওয়ার্ক এখনও প্রস্তুত নয়। কিছুক্ষণ পর আবার চেষ্টা করুন।");
+        btn.innerText = "অ্যাড দেখুন (৳০.৫০)";
+        btn.disabled = false;
+      }
     }
 
     // ২. টাস্ক কমপ্লিট করার ফাংশন (৳১.০০)
     function completeTask(taskId, reward) {
       if (completedTasks.includes(taskId)) return;
 
-      // উদাহরণের জন্য একটি ডামি লিংক চালু করা
       window.open('https://t.me', '_blank');
 
       setTimeout(() => {
@@ -153,7 +161,7 @@
     // ৩. রেফারেল লিংক কপি (৳১০.০০ প্রতি রেফার)
     function copyReferralLink() {
       const userId = tg.initDataUnsafe?.user?.id || 'demo_user';
-      const botUsername = 'your_bot_username'; // আপনার বটের ইউজারনেম দিন
+      const botUsername = 'your_bot_username'; 
       const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
       
       navigator.clipboard.writeText(refLink);
@@ -181,13 +189,11 @@
         return;
       }
 
-      // ব্যালেন্স কেটে নেওয়া
       balance -= amount;
       updateUI();
 
       alert(`আপনার ৳${amount} টাকার ${method.toUpperCase()} উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে। শীঘ্রই বিকাশ/নগদে পাঠানো হবে।`);
       
-      // ইনপুট ফিল্ড খালি করা
       document.getElementById('withdraw-amount').value = '';
       document.getElementById('account-number').value = '';
     }
