@@ -1,205 +1,117 @@
-<!DOCTYPE html>
-<html lang="bn">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Earn Money Mini App</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <!-- Monetag Ad SDK -->
-  <script src="//libtl.com/sdk.js" data-zone="11990145" data-sdk="show_11990145"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--tg-theme-bg-color, #f4f7f6); color: var(--tg-theme-text-color, #333); padding: 15px; }
-    
-    .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-    .balance-card { background: linear-gradient(135deg, #0088cc, #005588); color: white; }
-    .balance-title { font-size: 14px; opacity: 0.9; }
-    .balance-amount { font-size: 32px; font-weight: bold; margin: 10px 0; }
-    
-    button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #0088cc; color: white; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.2s; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    
-    .task-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #eee; }
-    .task-info { text-align: left; }
-    .task-title { font-weight: bold; font-size: 14px; }
-    .task-reward { font-size: 12px; color: #28a745; font-weight: bold; }
-    .task-btn { width: auto; padding: 8px 15px; font-size: 13px; }
-    
-    input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-  </style>
-</head>
-<body>
+<div class="card">
+        <h3>টাকা উত্তোলন (Withdraw)</h3>
+        <p class="info-text">সর্বনিম্ন উইথড্র <b>৳১০০.০০</b> (বিকাশ এবং নগদ)</p>
+        
+        <select id="paymentMethod">
+            <option value="Bkash">বিকাশ (bKash)</option>
+            <option value="Nagad">নগদ (Nagad)</option>
+        </select>
+        
+        <input type="text" id="accountNumber" placeholder="মোবাইল নম্বর লিখুন" />
+        <input type="number" id="withdrawAmount" placeholder="টাকার পরিমাণ (সর্বনিম্ন ১০০)" />
 
-  <!-- ড্যাশবোর্ড ও ব্যালেন্স -->
-  <div class="card balance-card">
-    <div class="balance-title">আপনার বর্তমান ব্যালেন্স</div>
-    <div class="balance-amount">৳ <span id="user-balance">0.00</span></div>
-    <small id="user-name">ব্যবহারকারী</small>
-  </div>
-
-  <!-- ওয়াচ অ্যাড সেকশন -->
-  <div class="card">
-    <h3>📺 ভিডিও অ্যাড দেখুন</h3>
-    <p style="font-size: 13px; color: #666; margin: 5px 0 10px;">প্রতিটি এড দেখলে পাবেন ৳০.৫০</p>
-    <button id="watch-ad-btn" onclick="watchAd()">অ্যাড দেখুন (৳০.৫০)</button>
-  </div>
-
-  <!-- টাস্ক সেকশন -->
-  <div class="card">
-    <h3>📋 দৈনিক টাস্ক</h3>
-    
-    <div class="task-item">
-      <div class="task-info">
-        <div class="task-title">টেলিগ্রাম চ্যানেলে জয়েন করুন</div>
-        <div class="task-reward">+ ৳১.০০</div>
-      </div>
-      <button class="task-btn" id="task1-btn" onclick="completeTask('task1', 1.0)">পূরণ করুন</button>
+        <button class="btn btn-withdraw" onclick="requestWithdrawal()">উইথড্র রিকোয়েস্ট পাঠান</button>
     </div>
+</div>
 
-    <div class="task-item">
-      <div class="task-info">
-        <div class="task-title">ইউটিউব চ্যানেল সাবস্ক্রাইব করুন</div>
-        <div class="task-reward">+ ৳১.০০</div>
-      </div>
-      <button class="task-btn" id="task2-btn" onclick="completeTask('task2', 1.0)">পূরণ করুন</button>
-    </div>
-  </div>
-
-  <!-- রেফারেল সেকশন -->
-  <div class="card">
-    <h3>👥 রেফার করে আয় করুন</h3>
-    <p style="font-size: 13px; color: #666; margin: 5px 0 10px;">প্রতিটি সফল রেফারে পাবেন ৳১০.০০</p>
-    <button onclick="copyReferralLink()">রেফারেল লিংক কপি করুন</button>
-  </div>
-
-  <!-- উইথড্র সেকশন -->
-  <div class="card">
-    <h3>💸 টাকা উত্তোলন (Withdraw)</h3>
-    <p style="font-size: 12px; color: #d9534f; margin-bottom: 10px;">সর্বনিম্ন উইথড্র সীমা: ৳১০০.০০</p>
-    
-    <select id="payment-method">
-      <option value="bkash">বিকাশ (bKash)</option>
-      <option value="nagad">নগদ (Nagad)</option>
-      <option value="rocket">রকেট (Rocket)</option>
-    </select>
-    
-    <input type="number" id="withdraw-amount" placeholder="পরিমাণ (যেমন: 100)" min="100">
-    <input type="text" id="account-number" placeholder="মোবাইল নম্বর">
-    
-    <button onclick="requestWithdraw()" style="background: #28a745; margin-top: 5px;">উইথড্র রিকোয়েস্ট পাঠান</button>
-  </div>
-
-  <script>
+<script>
+    // Initialize Telegram Web App
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // ইউজারের ডাটা লোড বা ইনিশিয়ালাইজ করা
-    let balance = parseFloat(localStorage.getItem('user_balance')) || 0.00;
-    let completedTasks = JSON.parse(localStorage.getItem('completed_tasks')) || [];
+    // User details & local storage key
+    const user = tg.initDataUnsafe?.user;
+    const userId = user ? user.id : "guest_user";
+    const storageKey = 'user_balance_' + userId;
 
-    // স্ক্রিনে ব্যালেন্স আপডেট
-    function updateUI() {
-      document.getElementById('user-balance').innerText = balance.toFixed(2);
-      localStorage.setItem('user_balance', balance);
+    // Load Balance from LocalStorage (or default 0)
+    let balance = parseFloat(localStorage.getItem(storageKey)) || 0.00;
+    updateBalanceDisplay();
 
-      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
-      }
+    // Check Referral Reward on start
+    checkReferralBonus();
 
-      // পূর্বের সম্পন্ন করা টাস্ক ডিজেবল রাখা
-      completedTasks.forEach(taskId => {
-        const btn = document.getElementById(taskId + '-btn');
-        if (btn) {
-          btn.innerText = "সম্পন্ন";
-          btn.disabled = true;
-        }
-      });
+    function updateBalanceDisplay() {
+        document.getElementById('balance').innerText = balance.toFixed(2);
+        localStorage.setItem(storageKey, balance);
     }
 
-    // ১. Monetag Rewarded Ad দেখার ফাংশন (৳০.৫০)
+    // 1. Monetag Rewarded Ad System
     function watchAd() {
-      const btn = document.getElementById('watch-ad-btn');
-      btn.disabled = true;
-      btn.innerText = "অ্যাড লোড হচ্ছে...";
-
-      if (typeof show_11990145 === 'function') {
-        show_11990145('pop').then(() => {
-          // ইউজার অ্যাড সম্পূর্ণ দেখেছে
-          balance += 0.50;
-          updateUI();
-          alert("অভিনন্দন! আপনি ৳০.৫০ রিওয়ার্ড পেয়েছেন।");
-          btn.innerText = "অ্যাড দেখুন (৳০.৫০)";
-          btn.disabled = false;
-        }).catch(e => {
-          // অ্যাড লোড হতে সমস্যা হলে বা কোনো এরর দেখা দিলে
-          alert("অ্যাড প্লে হতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
-          btn.innerText = "অ্যাড দেখুন (৳০.৫০)";
-          btn.disabled = false;
-        });
-      } else {
-        alert("অ্যাড নেটওয়ার্ক এখনও প্রস্তুত নয়। কিছুক্ষণ পর আবার চেষ্টা করুন।");
-        btn.innerText = "অ্যাড দেখুন (৳০.৫০)";
-        btn.disabled = false;
-      }
+        if (typeof show_11990145 === 'function') {
+            show_11990145('pop').then(() => {
+                balance += 0.50;
+                updateBalanceDisplay();
+                alert("অভিনন্দন! আপনি ৫০ পয়সা পেয়েছেন।");
+            }).catch(e => {
+                alert("বিজ্ঞাপন লোড হতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+            });
+        } else {
+            alert("বিজ্ঞাপন নেটওয়ার্ক যুক্ত করা সম্ভব হয়নি।");
+        }
     }
 
-    // ২. টাস্ক কমপ্লিট করার ফাংশন (৳১.০০)
-    function completeTask(taskId, reward) {
-      if (completedTasks.includes(taskId)) return;
-
-      window.open('https://t.me', '_blank');
-
-      setTimeout(() => {
-        balance += reward;
-        completedTasks.push(taskId);
-        localStorage.setItem('completed_tasks', JSON.stringify(completedTasks));
-        updateUI();
-        alert(`টাস্ক সম্পন্ন হয়েছে! ৳${reward.toFixed(2)} যোগ করা হয়েছে।`);
-      }, 2000);
+    // 2. Task System (1 Taka reward)
+    function completeTask() {
+        balance += 1.00;
+        updateBalanceDisplay();
+        alert("টাস্ক সফলভাবে সম্পন্ন হয়েছে! আপনি ১ টাকা পেয়েছেন।");
     }
 
-    // ৩. রেফারেল লিংক কপি (৳১০.০০ প্রতি রেফার)
-    function copyReferralLink() {
-      const userId = tg.initDataUnsafe?.user?.id || 'demo_user';
-      const botUsername = 'your_bot_username'; 
-      const refLink = `https://t.me/${botUsername}?start=ref_${userId}`;
-      
-      navigator.clipboard.writeText(refLink);
-      alert("রেফারেল লিংক কপি হয়েছে!\n" + refLink + "\n\nএই লিংকে কেউ জয়েন করলে আপনি ৳১০.০০ পাবেন।");
+    // 3. Referral System (10 Taka reward)
+    const botUsername = "YOUR_BOT_USERNAME"; // আপনার টেলিগ্রাম বটের ইউজারনেম দিন (@ ছাড়া)
+    const referUrl = https://t.me/${botUsername}?start=ref_${userId};
+    document.getElementById('refLink').innerText = referUrl;
+
+    function copyReferLink() {
+        navigator.clipboard.writeText(referUrl);
+        alert("রেফার লিংক কপি করা হয়েছে!");
     }
 
-    // ৪. উইথড্র ফাংশন (সর্বনিম্ন ৳১০০)
-    function requestWithdraw() {
-      const amount = parseFloat(document.getElementById('withdraw-amount').value);
-      const number = document.getElementById('account-number').value.trim();
-      const method = document.getElementById('payment-method').value;
+    function checkReferralBonus() {
+        const startParam = tg.initDataUnsafe?.start_param;
+        const refClaimedKey = 'ref_claimed_' + userId;
 
-      if (!amount || amount < 100) {
-        alert("সর্বনিম্ন উইথড্র পরিমাণ ৳১০০ টাকা!");
-        return;
-      }
-
-      if (amount > balance) {
-        alert("আপনার ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই!");
-        return;
-      }
-
-      if (number.length < 11) {
-        alert("সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন!");
-        return;
-      }
-
-      balance -= amount;
-      updateUI();
-
-      alert(`আপনার ৳${amount} টাকার ${method.toUpperCase()} উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে। শীঘ্রই বিকাশ/নগদে পাঠানো হবে।`);
-      
-      document.getElementById('withdraw-amount').value = '';
-      document.getElementById('account-number').value = '';
+        if (startParam && startParam.startsWith('ref_') && !localStorage.getItem(refClaimedKey)) {
+            balance += 10.00;
+            updateBalanceDisplay();
+            localStorage.setItem(refClaimedKey, 'true');
+            alert("রেফারাল লিংকের মাধ্যমে যোগ দেওয়ায় আপনি ১০ টাকা বোনাস পেয়েছেন!");
+        }
     }
 
-    // অ্যাপ লোড হলে UI সেট করা
-    updateUI();
-  </script>
+    // 4. Withdrawal System (bKash / Nagad - Min 100 BDT)
+    function requestWithdrawal() {
+        const method = document.getElementById('paymentMethod').value;
+        const number = document.getElementById('accountNumber').value.trim();
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+
+        if (!number) {
+            alert("অনুগ্রহ করে আপনার " + method + " মোবাইল নম্বরটি লিখুন।");
+            return;
+        }
+
+        if (isNaN(amount) || amount < 100) {
+            alert("সর্বনিম্ন উইথড্র ১০০ টাকা হতে হবে।");
+            return;
+        }
+
+        if (amount > balance) {
+            alert("আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই!");
+            return;
+        }
+
+        // Deduct balance and update
+        balance -= amount;
+        updateBalanceDisplay();
+
+        // Clear input fields
+        document.getElementById('accountNumber').value = '';
+        document.getElementById('withdrawAmount').value = '';
+
+        alert(আপনার ${amount} টাকার উইথড্র রিকোয়েস্ট (${method}: ${number}) সফলভাবে জমা হয়েছে!);
+    }
+</script>
+
 </body>
 </html>
